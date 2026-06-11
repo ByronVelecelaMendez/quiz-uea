@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz UEA – Pruebas Preuniversitario</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --card: #21253a;
+    --border: #2e3352;
+    --accent: #5b7fff;
+    --accent-glow: #5b7fff33;
+    --green: #3ecf8e;
+    --red: #ff5c72;
+    --yellow: #f7c94b;
+    --text: #e8eaf2;
+    --muted: #8890b0;
+    --radius: 14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0 16px 40px;
+  }
+
+  /* ── HEADER ── */
+  header {
+    text-align: center;
+    padding: 40px 16px 28px;
+  }
+  .badge {
+    display: inline-block;
+    background: var(--accent-glow);
+    color: var(--accent);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--accent);
+    margin-bottom: 14px;
+  }
+  h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(24px, 5vw, 38px);
+    font-weight: 700;
+    letter-spacing: -.02em;
+    line-height: 1.15;
+  }
+  h1 span { color: var(--accent); }
+  .subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    margin-top: 8px;
+  }
+
+  /* ── PROGRESS ── */
+  #progress-wrap {
+    max-width: 680px;
+    margin: 0 auto 28px;
+  }
+  .prog-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .prog-bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .prog-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), #a78bfa);
+    border-radius: 99px;
+    transition: width .4s ease;
+  }
+
+  /* ── QUESTION CARD ── */
+  #quiz-container {
+    max-width: 680px;
+    margin: 0 auto;
+  }
+  .q-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    margin-bottom: 16px;
+    animation: slideIn .3s ease;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .q-number {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+  .q-text {
+    font-size: 17px;
+    line-height: 1.6;
+    font-weight: 500;
+    margin-bottom: 24px;
+  }
+  .q-tag {
+    display: inline-block;
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2px 8px;
+    margin-bottom: 14px;
+  }
+
+  /* ── OPTIONS ── */
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .opt {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    font-size: 15px;
+  }
+  .opt:hover { border-color: var(--accent); background: var(--accent-glow); }
+  .opt .letter {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+    transition: background .15s, border-color .15s;
+  }
+  .opt.correct { border-color: var(--green); background: #3ecf8e18; }
+  .opt.correct .letter { background: var(--green); border-color: var(--green); color: #0f1117; }
+  .opt.wrong   { border-color: var(--red); background: #ff5c7218; }
+  .opt.wrong .letter   { background: var(--red); border-color: var(--red); color: #fff; }
+  .opt.disabled { pointer-events: none; opacity: .55; }
+  .opt.disabled.correct { opacity: 1; }
+
+  /* ── FEEDBACK ── */
+  .feedback {
+    margin-top: 14px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    line-height: 1.5;
+    display: none;
+  }
+  .feedback.show { display: block; }
+  .feedback.ok  { background: #3ecf8e15; border: 1px solid #3ecf8e44; color: var(--green); }
+  .feedback.ko  { background: #ff5c7215; border: 1px solid #ff5c7244; color: var(--red); }
+
+  /* ── NEXT BUTTON ── */
+  #next-btn {
+    display: none;
+    width: 100%;
+    max-width: 680px;
+    margin: 0 auto 32px;
+    padding: 15px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity .15s, transform .1s;
+  }
+  #next-btn:hover { opacity: .88; transform: translateY(-1px); }
+
+  /* ── RESULTS ── */
+  #results {
+    display: none;
+    max-width: 680px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  .score-ring {
+    width: 140px; height: 140px;
+    margin: 0 auto 24px;
+    position: relative;
+  }
+  .score-ring svg { transform: rotate(-90deg); }
+  .score-ring .ring-bg { stroke: var(--border); }
+  .score-ring .ring-fill {
+    stroke: var(--accent);
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s ease;
+  }
+  .score-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .score-label .num {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .score-label .den { font-size: 13px; color: var(--muted); }
+  #results h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 26px;
+    margin-bottom: 8px;
+  }
+  #results p { color: var(--muted); font-size: 15px; margin-bottom: 28px; }
+  .stat-row {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 28px;
+  }
+  .stat {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 24px;
+    text-align: center;
+  }
+  .stat .val {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+  }
+  .stat .lbl { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .stat.g .val { color: var(--green); }
+  .stat.r .val { color: var(--red); }
+  #restart-btn {
+    padding: 14px 32px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  #restart-btn:hover { opacity: .85; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="badge">UEA · Preuniversitario Dario Kira</div>
+  <h1>Quiz de <span>Práctica</span></h1>
+  <p class="subtitle">25 preguntas · Selecciona la respuesta correcta</p>
+</header>
+
+<div id="progress-wrap">
+  <div class="prog-info">
+    <span id="prog-text">Pregunta 1 de 25</span>
+    <span id="prog-pct">0%</span>
+  </div>
+  <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+</div>
+
+<div id="quiz-container"></div>
+<button id="next-btn">Siguiente pregunta →</button>
+
+<div id="results">
+  <div class="score-ring">
+    <svg width="140" height="140" viewBox="0 0 140 140">
+      <circle class="ring-bg" cx="70" cy="70" r="58" fill="none" stroke-width="10"/>
+      <circle class="ring-fill" id="ring-fill" cx="70" cy="70" r="58" fill="none" stroke-width="10"
+        stroke-dasharray="364.4" stroke-dashoffset="364.4"/>
+    </svg>
+    <div class="score-label">
+      <span class="num" id="res-num">0</span>
+      <span class="den">de 25</span>
+    </div>
+  </div>
+  <h2 id="res-title">¡Resultado final!</h2>
+  <p id="res-msg"></p>
+  <div class="stat-row">
+    <div class="stat g"><div class="val" id="res-ok">0</div><div class="lbl">Correctas</div></div>
+    <div class="stat r"><div class="val" id="res-fail">0</div><div class="lbl">Incorrectas</div></div>
+    <div class="stat"><div class="val" id="res-pct">0%</div><div class="lbl">Puntaje</div></div>
+  </div>
+  <button id="restart-btn" onclick="restart()">Volver a intentar</button>
+</div>
+
+<script>
+const questions = [
+  {
+    n: 1, area: "Matemática",
+    q: "Pedro tiene 3 veces más canicas que Juan. Si Juan tiene 5, ¿cuántas tiene Pedro?",
+    opts: ["10","20","15","25"],
+    ans: 2,
+    exp: "5 × 3 = 15 canicas."
+  },
+  {
+    n: 2, area: "Lenguaje",
+    q: '"Camarón que se duerme se lo lleva la corriente" advierte que:',
+    opts: [
+      "Si no estás atento, puedes perder oportunidades.",
+      "El trabajo duro da sus frutos.",
+      "Hay que seguir la corriente.",
+      "Hay que estar siempre en movimiento."
+    ],
+    ans: 0,
+    exp: "El refrán advierte que la falta de atención lleva a perder oportunidades."
+  },
+  {
+    n: 3, area: "Razonamiento",
+    q: "¿Qué número continúa la serie? 1/2, 1, 3/2, 2, 5/2, ...",
+    opts: ["7/2","3","6/3","4"],
+    ans: 1,
+    exp: "La serie suma 1/2 en cada paso: 5/2 + 1/2 = 3."
+  },
+  {
+    n: 4, area: "Comprensión",
+    q: "Las personas que practican deportes regularmente tienden a tener una mejor salud física. ¿Qué efecto tiene practicar deportes en la salud física?",
+    opts: [
+      "Disminuye la salud física de las personas que practican deportes regularmente.",
+      "No tiene ningún efecto en la salud física de las personas que practican deportes regularmente.",
+      "Contribuye a una mejor salud física en general.",
+      "Solo mejora la salud mental, no la física."
+    ],
+    ans: 2,
+    exp: "El enunciado indica directamente que el deporte contribuye a una mejor salud física."
+  },
+  {
+    n: 5, area: "Lenguaje",
+    q: "¿Qué palabra continúa la serie? Minúsculo, pequeño, mediano, grande, enorme, ......",
+    opts: ["gigante","gordo","elefante","superior"],
+    ans: 0,
+    exp: "La serie va de menor a mayor tamaño; el siguiente grado es gigante."
+  },
+  {
+    n: 6, area: "Razonamiento",
+    q: "Completa la serie: A, B, C, D, ...",
+    opts: ["D, F, G, E","F","G","E"],
+    ans: 0,
+    exp: "Siguiendo el abecedario, después de D viene E."
+  },
+  {
+    n: 7, area: "Atención",
+    q: "Compare los nombres y las direcciones:\nCuadro 1: Juan Pérez López / Calle 5 #20-45 APTO 301\nCuadro 2: Juan Pérez Lopez / Calle 5 #20-45 APTO 301\nSeleccione una:",
+    opts: [
+      "Nombre distinto y dirección igual.",
+      "Nombres y direcciones iguales.",
+      "Dirección distinta y nombre igual.",
+      "Nombres y direcciones distintos."
+    ],
+    ans: 0,
+    exp: "El primer tiene 'López' (con tilde) y el segundo 'Lopez' (sin tilde); la dirección es igual."
+  },
+  {
+    n: 8, area: "Matemática",
+    q: "Si 2→4, 3→9, 4→16, entonces 5→?",
+    opts: ["36","30","25","20"],
+    ans: 2,
+    exp: "El patrón es n² : 2²=4, 3²=9, 4²=16, 5²=25."
+  },
+  {
+    n: 9, area: "Matemática",
+    q: "¿Qué número continúa la serie? 1, 8, 27, 64, ...",
+    opts: ["124","225","125","120"],
+    ans: 2,
+    exp: "Son cubos perfectos: 1³=1, 2³=8, 3³=27, 4³=64, 5³=125."
+  },
+  {
+    n: 10, area: "Comprensión",
+    q: "En una biblioteca silenciosa, Ana, la bibliotecaria, descubre un libro descolocado en un estante que no le corresponde. Al inspeccionarlo, nota que tiene una página doblada y algunas marcas de lápiz en el margen. ¿Quién manipuló el libro y por qué?",
+    opts: [
+      "Un investigador lo consultó para su trabajo y lo dejó sin cuidado.",
+      "Un ladrón intentó robarlo, pero al ser descubierto lo dejó abandonado.",
+      "Un estudiante lo tomó para estudiar y luego lo devolvió en el lugar incorrecto.",
+      "Un niño travieso lo movió por simple diversión."
+    ],
+    ans: 2,
+    exp: "Las marcas de lápiz y la página doblada son indicios de estudio; lo más lógico es que fue un estudiante."
+  },
+  {
+    n: 11, area: "Lenguaje",
+    q: "¿Cuál es la letra que tienen en similitud todas las siguientes palabras? zanahoria, zancudo, zapato, zorro",
+    opts: ["Y","Z","P","S"],
+    ans: 1,
+    exp: "Todas las palabras comienzan con la letra Z."
+  },
+  {
+    n: 12, area: "Matemática",
+    q: "Si un conjunto tiene 4 elementos distintos entre sí y otro conjunto tiene 5 elementos distintos entre sí y a los del conjunto anterior, el conjunto unión de estos dos conjuntos posee:",
+    opts: [
+      "Tres elementos diferentes entre sí.",
+      "Nueve elementos diferentes entre sí.",
+      "Solo un elemento diferente.",
+      "Cinco elementos diferentes entre sí."
+    ],
+    ans: 1,
+    exp: "La unión suma todos los elementos distintos: 4 + 5 = 9."
+  },
+  {
+    n: 13, area: "Atención",
+    q: "Escoja exactamente el mismo grupo de letras que la subrayada: TMM",
+    opts: ["RMT","LTR","TMM","MTR"],
+    ans: 2,
+    exp: "TMM es idéntico al grupo subrayado TMM."
+  },
+  {
+    n: 14, area: "Razonamiento",
+    q: "Seleccione lo que falta para completar la relación:\noveja - abeja\nsalobre - salubre\ndeferencia - diferencia\nceleridad - _______",
+    opts: ["brida","célebre","celebridad","acelerón"],
+    ans: 2,
+    exp: "En cada par se cambia una letra inicial; celeridad → celebridad sigue el mismo patrón."
+  },
+  {
+    n: 15, area: "Lenguaje",
+    q: "¿Qué palabra continúa la serie? Caprino, vacuno, ovino, ...",
+    opts: ["vaca","porcino","hormiga","caracol"],
+    ans: 1,
+    exp: "Caprino=cabras, vacuno=vacas, ovino=ovejas, porcino=cerdos; todos son tipos de ganado."
+  },
+  {
+    n: 16, area: "Matemática",
+    q: "Cuando nació Rocío, Patricia tenía 8 años. Si actualmente sus edades suman 36 años, ¿cuántos años tiene Rocío?",
+    opts: ["13","12","15","14"],
+    ans: 3,
+    exp: "x + (x+8) = 36 → 2x = 28 → x = 14. Rocío tiene 14 años."
+  },
+  {
+    n: 17, area: "Matemática",
+    q: "La suma de cinco números enteros consecutivos es 185. ¿Cuál es el número mayor?",
+    opts: ["39","40","35","36"],
+    ans: 0,
+    exp: "185 ÷ 5 = 37 (número del medio). Los cinco números son 35, 36, 37, 38, 39. El mayor es 39."
+  },
+  {
+    n: 18, area: "Razonamiento",
+    q: "Encuentre la palabra que continúa la serie: Marte, Tierra, Júpiter, Saturno, ...",
+    opts: ["Sol","Estrella","Plutón","Luna"],
+    ans: 2,
+    exp: "Son planetas del sistema solar en orden de tamaño creciente; el siguiente en la secuencia es Plutón (o Urano, pero la opción válida es Plutón)."
+  },
+  {
+    n: 19, area: "Atención",
+    q: "¿En qué grupo de letras y números hay una letra o número que NO está en los otros grupos? a) 71QMT  b) QTM5  c) TQ7M1  d) MTQ17",
+    opts: ["71QMT","QTM5","TQ7M1","MTQ17"],
+    ans: 1,
+    exp: "El grupo QTM5 contiene el número 5, que no aparece en ninguno de los otros grupos."
+  },
+  {
+    n: 20, area: "Razonamiento",
+    q: "Completa la serie: alfa, beta, gamma, ___",
+    opts: ["eta","epsilon","delta","zeta"],
+    ans: 2,
+    exp: "El orden del alfabeto griego es: alfa, beta, gamma, delta."
+  },
+  {
+    n: 21, area: "Razonamiento",
+    q: "Ubique el número y la letra que falta en la siguiente serie: 20z, 21y, 22x, 23w, 24v, .....",
+    opts: ["22u","25s","25u","24t"],
+    ans: 2,
+    exp: "El número sube en 1 y la letra retrocede en el abecedario: 25u."
+  },
+  {
+    n: 22, area: "Razonamiento",
+    q: "Afirmación: La secuencia describe un proceso cíclico natural.",
+    opts: ["Falso","Verdadero"],
+    ans: 1,
+    exp: "Verdadero: una secuencia cíclica natural repite sus etapas indefinidamente."
+  },
+  {
+    n: 23, area: "Lenguaje",
+    q: '"Hacer leña del árbol caído" advierte que:',
+    opts: [
+      "El árbol caído ya no importa.",
+      "Cuando un árbol cae hay que hacer leña.",
+      "La leña es importante para el agricultor.",
+      "Cuando una persona cae, muchos se aprovechan."
+    ],
+    ans: 3,
+    exp: "El refrán significa que cuando alguien está en desgracia, otros aprovechan su situación."
+  },
+  {
+    n: 24, area: "Lenguaje",
+    q: "Las siguientes palabras pertenecen a la misma categoría, excepto una — señale por favor: Lenguaje, Coloquial, Comunicación, Exequial",
+    opts: ["Lenguaje","Coloquial","Comunicación","Exequial"],
+    ans: 3,
+    exp: "Exequial hace referencia a los ritos fúnebres; las demás palabras se relacionan con la comunicación."
+  },
+  {
+    n: 25, area: "Razonamiento",
+    q: 'La serie "Estudiante, Profesor, Director, Rector" es una serie lógica.',
+    opts: ["Verdadero","Falso"],
+    ans: 0,
+    exp: "Verdadero: la serie muestra una jerarquía ascendente dentro de una institución educativa."
+  }
+];
+
+let current = 0, score = 0, answered = false;
+
+function render() {
+  const q = questions[current];
+  const letters = ['A','B','C','D'];
+
+  document.getElementById('prog-text').textContent = `Pregunta ${current+1} de ${questions.length}`;
+  const pct = Math.round((current / questions.length) * 100);
+  document.getElementById('prog-pct').textContent = pct + '%';
+  document.getElementById('prog-fill').style.width = pct + '%';
+
+  const container = document.getElementById('quiz-container');
+  container.innerHTML = `
+    <div class="q-card">
+      <div class="q-number">Pregunta ${q.n}</div>
+      <div class="q-tag">${q.area}</div>
+      <div class="q-text">${q.q.replace(/\n/g,'<br>')}</div>
+      <div class="options" id="opts">
+        ${q.opts.map((o,i)=>`
+          <div class="opt" data-i="${i}" onclick="choose(${i})">
+            <div class="letter">${letters[i]}</div>
+            <span>${o}</span>
+          </div>`).join('')}
+      </div>
+      <div class="feedback" id="feedback"></div>
+    </div>`;
+
+  answered = false;
+  document.getElementById('next-btn').style.display = 'none';
+}
+
+function choose(i) {
+  if (answered) return;
+  answered = true;
+  const q = questions[current];
+  const opts = document.querySelectorAll('.opt');
+  const fb = document.getElementById('feedback');
+
+  opts.forEach((el, idx) => {
+    el.classList.add('disabled');
+    if (idx === q.ans) el.classList.add('correct');
+    else if (idx === i) el.classList.add('wrong');
+  });
+
+  if (i === q.ans) {
+    score++;
+    fb.className = 'feedback show ok';
+    fb.innerHTML = '✓ &nbsp;¡Correcto! ' + q.exp;
+  } else {
+    fb.className = 'feedback show ko';
+    fb.innerHTML = '✗ &nbsp;Incorrecto. ' + q.exp;
+  }
+
+  const btn = document.getElementById('next-btn');
+  btn.style.display = 'block';
+  btn.textContent = current < questions.length - 1 ? 'Siguiente pregunta →' : 'Ver resultado';
+}
+
+document.getElementById('next-btn').addEventListener('click', () => {
+  current++;
+  if (current < questions.length) {
+    render();
+  } else {
+    showResults();
+  }
+});
+
+function showResults() {
+  document.getElementById('progress-wrap').style.display = 'none';
+  document.getElementById('quiz-container').style.display = 'none';
+  document.getElementById('next-btn').style.display = 'none';
+  const res = document.getElementById('results');
+  res.style.display = 'block';
+
+  const pct = Math.round((score / questions.length) * 100);
+  document.getElementById('res-num').textContent = score;
+  document.getElementById('res-ok').textContent = score;
+  document.getElementById('res-fail').textContent = questions.length - score;
+  document.getElementById('res-pct').textContent = pct + '%';
+
+  let title, msg;
+  if (pct >= 80) { title = '¡Excelente trabajo! 🎉'; msg = 'Estás muy bien preparado para el examen UEA.'; }
+  else if (pct >= 60) { title = '¡Buen esfuerzo! 💪'; msg = 'Vas por buen camino. Repasa las preguntas que fallaste.'; }
+  else { title = 'Sigue practicando 📚'; msg = 'Repasa los temas donde tuviste dificultades y vuelve a intentarlo.'; }
+  document.getElementById('res-title').textContent = title;
+  document.getElementById('res-msg').textContent = msg;
+
+  const circumference = 364.4;
+  const offset = circumference - (circumference * score / questions.length);
+  setTimeout(() => {
+    document.getElementById('ring-fill').style.strokeDashoffset = offset;
+  }, 100);
+}
+
+function restart() {
+  current = 0; score = 0;
+  document.getElementById('progress-wrap').style.display = 'block';
+  document.getElementById('quiz-container').style.display = 'block';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('ring-fill').style.strokeDashoffset = 364.4;
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
